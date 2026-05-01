@@ -1,40 +1,5 @@
-# ==========================================
-# Author: Nir Arazi
-# Description: Network Threat Detection Rules
-# Version: 3.0
-# Last Updated: 2026
-# Categories:
-#   01 - DNS Tunneling
-#   02 - ICMP Tunneling
-#   03 - Port Scanning
-#   04 - SMB / EternalBlue
-#   05 - File Exfiltration (HTTP/HTTPS/FTP)
-#   06 - File Exfiltration (Magic Bytes)
-#   07 - File Exfiltration (ICMP)
-#   08 - Shell Detection
-#   09 - Log4J / Log4Shell
-#   10 - Mimikatz (Network-Visible)
-#   11 - XSS
-#   12 - SQL Injection
-#   13 - Ransomware
-#   14 - C2 Beaconing
-#   15 - Brute Force
-#   16 - Reconnaissance
-#   17 - Lateral Movement
-#   18 - Data Staging
-#   19 - Web Attacks (LFI/RFI/CMDi/Traversal/SSRF)
-#   20 - Protocol Abuse
-#   21 - Malware Specific
-#   22 - Cloud / Modern Infrastructure
-#   23 - Email Based Attacks
-#   24 - VoIP Attacks
-#   25 - Industrial / OT
-# ==========================================
 
 
-# ==========================================
-# 01 - DNS TUNNELING
-# ==========================================
 
 alert udp any any -> any 53 (msg:"DNS TUNNEL Base64 Pattern"; content:"."; depth:1; dsize:>150; sid:1000011; rev:1;)
 alert udp any any -> any 53 (msg:"DNS TUNNEL Long Query"; dsize:>100; sid:1000012; rev:1;)
@@ -42,30 +7,18 @@ alert udp any any -> any 53 (msg:"DNS TUNNEL Suspicious TXT Record"; content:"|0
 alert tcp any any -> any 53 (msg:"DNS TUNNEL TCP Query"; sid:1000014; rev:1;)
 
 
-# ==========================================
-# 02 - ICMP TUNNELING
-# ==========================================
 
 alert icmp any any -> any any (msg:"ICMP TUNNEL Large Payload"; dsize:>100; sid:1000015; rev:1;)
 
 
-# ==========================================
-# 03 - PORT SCANNING
-# ==========================================
 
 alert tcp any any -> any any (msg:"Possible Port Scan"; flags:S; threshold:type threshold, track by_src, count 20, seconds 3; sid:1000016; rev:1;)
 
 
-# ==========================================
-# 04 - SMB / ETERNALBLUE
-# ==========================================
 
 alert tcp any any -> any 445 (msg:"MS17-010 EternalBlue Attempt"; content:"|00 00 00 00 00 57 ff|"; sid:1000017; rev:1;)
 
 
-# ==========================================
-# 05 - FILE EXFILTRATION OVER HTTP/HTTPS/FTP
-# ==========================================
 
 alert tcp any any -> any 80 (msg:"FILE EXFIL Large HTTP POST"; content:"POST"; http_method; dsize:>5000; sid:1000020; rev:1;)
 alert tcp any any -> any 443 (msg:"FILE EXFIL Large HTTPS Outbound"; dsize:>10000; flow:to_server,established; sid:1000021; rev:1;)
@@ -73,9 +26,6 @@ alert tcp any any -> any 21 (msg:"FILE EXFIL FTP Command Channel"; content:"STOR
 alert tcp any any -> any 20 (msg:"FILE EXFIL FTP Data Transfer"; dsize:>1000; sid:1000023; rev:1;)
 
 
-# ==========================================
-# 06 - FILE EXFILTRATION BY MAGIC BYTES
-# ==========================================
 
 alert tcp any any -> any any (msg:"FILE EXFIL ZIP Archive Detected"; content:"|50 4B 03 04|"; sid:1000024; rev:1;)
 alert tcp any any -> any any (msg:"FILE EXFIL PDF Detected"; content:"|25 50 44 46|"; sid:1000025; rev:1;)
@@ -83,9 +33,6 @@ alert tcp any any -> any 80 (msg:"FILE EXFIL Base64 in HTTP"; content:"Content-T
 alert tcp any any -> any 80 (msg:"FILE EXFIL Pastebin Upload"; content:"pastebin.com"; http_header; sid:1000027; rev:1;)
 
 
-# ==========================================
-# 07 - FILE EXFILTRATION OVER ICMP
-# ==========================================
 
 alert icmp any any -> any any (msg:"FILE EXFIL ICMP Large Payload"; dsize:>64; itype:8; sid:1000030; rev:1;)
 alert icmp any any -> any any (msg:"FILE EXFIL ICMP Oversized Packet"; dsize:>200; sid:1000031; rev:1;)
@@ -95,43 +42,30 @@ alert icmp any any -> any any (msg:"FILE EXFIL ICMP PNG Detected"; content:"|89 
 alert icmp any any -> any any (msg:"FILE EXFIL ICMP High Frequency"; itype:8; threshold:type threshold, track by_src, count 10, seconds 5; sid:1000035; rev:1;)
 
 
-# ==========================================
-# 08 - SHELL DETECTION
-# ==========================================
 
-# Netcat
 alert tcp any any -> any any (msg:"SHELL Netcat Reverse Shell"; content:"nc -e"; sid:1000040; rev:1;)
 alert tcp any any -> any any (msg:"SHELL Netcat Listener"; content:"nc -lvp"; sid:1000041; rev:1;)
 
-# Bash
 alert tcp any any -> any any (msg:"SHELL Bash Reverse Shell"; content:"bash -i >& /dev/tcp/"; sid:1000042; rev:1;)
 
-# Python
 alert tcp any any -> any any (msg:"SHELL Python Reverse Shell"; content:"python -c"; sid:1000043; rev:1;)
 alert tcp any any -> any any (msg:"SHELL Python3 Reverse Shell"; content:"python3 -c"; sid:1000044; rev:1;)
 
-# PowerShell
 alert tcp any any -> any any (msg:"SHELL PowerShell Encoded Command"; content:"powershell"; nocase; content:"-enc"; distance:0; sid:1000045; rev:1;)
 alert tcp any any -> any any (msg:"SHELL PowerShell Download Cradle"; content:"IEX"; nocase; content:"DownloadString"; nocase; distance:0; sid:1000046; rev:1;)
 
-# Web shells
 alert tcp any any -> any 80 (msg:"SHELL Webshell cmd Parameter"; content:"cmd="; http_uri; sid:1000047; rev:1;)
 alert tcp any any -> any 80 (msg:"SHELL Webshell exec Parameter"; content:"exec="; http_uri; sid:1000048; rev:1;)
 alert tcp any any -> any 80 (msg:"SHELL Webshell passwd Access"; content:"/etc/passwd"; sid:1000049; rev:1;)
 
-# Suspicious ports
 alert tcp any any -> any 4444 (msg:"SHELL Suspicious Port 4444 Metasploit Default"; sid:1000050; rev:1;)
 alert tcp any any -> any 1337 (msg:"SHELL Suspicious Port 1337"; sid:1000051; rev:1;)
 alert tcp any any -> any 9001 (msg:"SHELL Suspicious Port 9001"; sid:1000052; rev:1;)
 
-# Shell binaries in payload
 alert tcp any any -> any any (msg:"SHELL bin/sh in Payload"; content:"/bin/sh"; sid:1000053; rev:1;)
 alert tcp any any -> any any (msg:"SHELL bin/bash in Payload"; content:"/bin/bash"; sid:1000054; rev:1;)
 
 
-# ==========================================
-# 09 - LOG4J / LOG4SHELL (CVE-2021-44228)
-# ==========================================
 
 alert tcp any any -> any any (msg:"LOG4J JNDI Lookup Attempt"; content:"${jndi:"; nocase; sid:1000060; rev:1;)
 alert tcp any any -> any any (msg:"LOG4J JNDI LDAP Exploit"; content:"${jndi:ldap://"; nocase; sid:1000061; rev:1;)
@@ -146,9 +80,6 @@ alert tcp any any -> any 389 (msg:"LOG4J Outbound LDAP Callback"; flow:to_server
 alert tcp any any -> any 1389 (msg:"LOG4J Outbound LDAP Alt Port Callback"; flow:to_server,established; sid:1000070; rev:1;)
 
 
-# ==========================================
-# 10 - MIMIKATZ (NETWORK-VISIBLE ONLY)
-# ==========================================
 
 alert tcp any any -> any 389 (msg:"MIMIKATZ DCSync LDAP Replication"; content:"DsGetNCChanges"; nocase; sid:1000080; rev:1;)
 alert tcp any any -> any 445 (msg:"MIMIKATZ Pass-The-Hash SMB"; content:"NTLMSSP"; nocase; sid:1000081; rev:1;)
@@ -156,9 +87,6 @@ alert udp any any -> any 88 (msg:"MIMIKATZ Suspicious Kerberos Large Ticket"; ds
 alert tcp any any -> any 445 (msg:"MIMIKATZ Remote LSASS Dump via SMB"; content:"lsass"; nocase; sid:1000083; rev:1;)
 
 
-# ==========================================
-# 11 - XSS (CROSS-SITE SCRIPTING)
-# ==========================================
 
 alert tcp any any -> any 80 (msg:"XSS Script Tag Detected"; content:"<script>"; http_uri; nocase; sid:1000090; rev:1;)
 alert tcp any any -> any 80 (msg:"XSS Script Tag in Body"; content:"<script>"; http_client_body; nocase; sid:1000091; rev:1;)
@@ -171,9 +99,6 @@ alert tcp any any -> any 80 (msg:"XSS Unicode Encoded"; content:"\\u003cscript";
 alert tcp any any -> any 80 (msg:"XSS Document Cookie Access"; content:"document.cookie"; http_uri; nocase; sid:1000098; rev:1;)
 
 
-# ==========================================
-# 12 - SQL INJECTION
-# ==========================================
 
 alert tcp any any -> any 80 (msg:"SQLI Union Select"; content:"union select"; http_uri; nocase; sid:1000100; rev:1;)
 alert tcp any any -> any 80 (msg:"SQLI OR 1=1"; content:"or 1=1"; http_uri; nocase; sid:1000101; rev:1;)
@@ -191,9 +116,6 @@ alert tcp any any -> any 80 (msg:"SQLI extractvalue Function"; content:"extractv
 alert tcp any any -> any 80 (msg:"SQLI updatexml Function"; content:"updatexml("; http_uri; nocase; sid:1000113; rev:1;)
 
 
-# ==========================================
-# 13 - RANSOMWARE
-# ==========================================
 
 alert tcp any any -> any 445 (msg:"RANSOMWARE SMB Spreading Behavior"; flags:S; threshold:type threshold, track by_src, count 10, seconds 5; sid:1000120; rev:1;)
 alert tcp any any -> any 9001 (msg:"RANSOMWARE TOR C2 Port 9001"; sid:1000121; rev:1;)
@@ -205,9 +127,6 @@ alert tcp any any -> any 80 (msg:"RANSOMWARE Ransom Note Keyword"; content:"YOUR
 alert tcp any any -> any 80 (msg:"RANSOMWARE Bitcoin Payment Request"; content:"bitcoin"; nocase; content:"wallet"; nocase; distance:0; sid:1000127; rev:1;)
 
 
-# ==========================================
-# 14 - C2 BEACONING
-# ==========================================
 
 alert tcp any any -> any 50050 (msg:"C2 Cobalt Strike Default Port"; sid:1000130; rev:1;)
 alert tcp any any -> any 8080 (msg:"C2 Suspicious HTTP Alt Port"; sid:1000131; rev:1;)
@@ -219,21 +138,15 @@ alert tcp any any -> any 4444 (msg:"C2 Meterpreter Default Port"; sid:1000136; r
 alert tcp any any -> any 443 (msg:"C2 Meterpreter Reverse HTTPS"; content:"METERPRETER"; nocase; sid:1000137; rev:1;)
 alert tcp any any -> any 80 (msg:"C2 PowerShell Empire Beacon"; content:"powershell"; http_client_body; nocase; sid:1000138; rev:1;)
 
-# Sliver C2 framework
 alert tcp any any -> any 31337 (msg:"C2 Sliver Framework Default Port"; sid:1000139; rev:1;)
 
-# Havoc C2 framework
 alert tcp any any -> any 40056 (msg:"C2 Havoc Framework Default Port"; sid:1000140; rev:1;)
 
-# Known malicious user agents
 alert tcp any any -> any 80 (msg:"C2 Suspicious curl User Agent"; content:"User-Agent: curl"; http_header; nocase; sid:1000141; rev:1;)
 alert tcp any any -> any 80 (msg:"C2 Python Requests User Agent"; content:"python-requests"; http_header; nocase; sid:1000142; rev:1;)
 alert tcp any any -> any 80 (msg:"C2 Go HTTP User Agent"; content:"Go-http-client"; http_header; nocase; sid:1000143; rev:1;)
 
 
-# ==========================================
-# 15 - BRUTE FORCE
-# ==========================================
 
 alert tcp any any -> any 22 (msg:"BRUTE FORCE SSH Login Attempt"; content:"SSH"; threshold:type threshold, track by_src, count 5, seconds 60; sid:1000150; rev:1;)
 alert tcp any any -> any 3389 (msg:"BRUTE FORCE RDP Login Attempt"; threshold:type threshold, track by_src, count 5, seconds 60; sid:1000151; rev:1;)
@@ -243,35 +156,24 @@ alert tcp any any -> any 445 (msg:"BRUTE FORCE SMB Authentication"; content:"NTL
 alert tcp any any -> any 23 (msg:"BRUTE FORCE Telnet Attempt"; threshold:type threshold, track by_src, count 5, seconds 60; sid:1000155; rev:1;)
 
 
-# ==========================================
-# 16 - RECONNAISSANCE
-# ==========================================
 
-# NMAP scan types
 alert tcp any any -> any any (msg:"RECON NMAP OS Fingerprint"; flags:SF; sid:1000160; rev:1;)
 alert tcp any any -> any any (msg:"RECON NMAP NULL Scan"; flags:0; sid:1000161; rev:1;)
 alert tcp any any -> any any (msg:"RECON NMAP FIN Scan"; flags:F; sid:1000162; rev:1;)
 alert tcp any any -> any any (msg:"RECON NMAP XMAS Scan"; flags:FPU; sid:1000163; rev:1;)
 
-# SMB enumeration
 alert tcp any any -> any 445 (msg:"RECON SMB Enumeration"; content:"SAMR"; nocase; sid:1000164; rev:1;)
 alert tcp any any -> any 445 (msg:"RECON SMB Share Enumeration"; content:"srvsvc"; nocase; sid:1000165; rev:1;)
 
-# LDAP enumeration
 alert tcp any any -> any 389 (msg:"RECON LDAP Enumeration"; content:"objectClass"; nocase; sid:1000166; rev:1;)
 alert tcp any any -> any 389 (msg:"RECON LDAP User Enumeration"; content:"samAccountName"; nocase; sid:1000167; rev:1;)
 
-# DNS zone transfer
 alert tcp any any -> any 53 (msg:"RECON DNS Zone Transfer AXFR"; content:"|00 FC|"; sid:1000168; rev:1;)
 alert udp any any -> any 53 (msg:"RECON DNS ANY Record Request"; content:"|00 FF|"; sid:1000169; rev:1;)
 
-# SNMP enumeration
 alert udp any any -> any 161 (msg:"RECON SNMP Enumeration"; content:"public"; sid:1000170; rev:1;)
 
 
-# ==========================================
-# 17 - LATERAL MOVEMENT
-# ==========================================
 
 alert tcp any any -> any 445 (msg:"LATERAL MOVEMENT PsExec Detected"; content:"PSEXESVC"; nocase; sid:1000180; rev:1;)
 alert tcp any any -> any 445 (msg:"LATERAL MOVEMENT PsExec Binary"; content:"|50 53 45 58 45 53 56 43|"; sid:1000181; rev:1;)
@@ -285,9 +187,6 @@ alert udp any any -> any 88 (msg:"LATERAL MOVEMENT Kerberos Pass The Ticket"; ds
 alert tcp any any -> any 445 (msg:"LATERAL MOVEMENT Remote Service Creation"; content:"svcctl"; nocase; sid:1000189; rev:1;)
 
 
-# ==========================================
-# 18 - DATA STAGING
-# ==========================================
 
 alert tcp any any -> any any (msg:"DATA STAGING RAR Archive Detected"; content:"|52 61 72 21 1A 07|"; sid:1000190; rev:1;)
 alert tcp any any -> any any (msg:"DATA STAGING 7ZIP Archive Detected"; content:"|37 7A BC AF 27 1C|"; sid:1000191; rev:1;)
@@ -298,29 +197,22 @@ alert tcp any any -> any 80 (msg:"DATA STAGING AppData Upload"; content:"AppData
 alert tcp any any -> any 80 (msg:"DATA STAGING Password Protected Archive"; content:"password"; http_client_body; nocase; content:".zip"; http_client_body; nocase; distance:0; sid:1000196; rev:1;)
 
 
-# ==========================================
-# 19 - WEB ATTACKS (LFI/RFI/CMDi/Traversal/SSRF)
-# ==========================================
 
-# Local File Inclusion (LFI)
 alert tcp any any -> any 80 (msg:"WEB ATTACK LFI /etc/passwd"; content:"/etc/passwd"; http_uri; nocase; sid:1000200; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK LFI /etc/shadow"; content:"/etc/shadow"; http_uri; nocase; sid:1000201; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK LFI Windows SAM"; content:"win.ini"; http_uri; nocase; sid:1000202; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK LFI proc/self"; content:"proc/self"; http_uri; nocase; sid:1000203; rev:1;)
 
-# Path Traversal
 alert tcp any any -> any 80 (msg:"WEB ATTACK Path Traversal ../"; content:"../"; http_uri; sid:1000204; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK Path Traversal Encoded %2e%2e"; content:"%2e%2e%2f"; http_uri; nocase; sid:1000205; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK Path Traversal Double Encoded"; content:"..%2f"; http_uri; nocase; sid:1000206; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK Path Traversal Windows"; content:"..\\"; http_uri; sid:1000207; rev:1;)
 
-# Remote File Inclusion (RFI)
 alert tcp any any -> any 80 (msg:"WEB ATTACK RFI HTTP Include"; content:"=http://"; http_uri; nocase; sid:1000208; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK RFI FTP Include"; content:"=ftp://"; http_uri; nocase; sid:1000209; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK RFI PHP Wrapper"; content:"php://input"; http_uri; nocase; sid:1000210; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK RFI Data URI"; content:"data://"; http_uri; nocase; sid:1000211; rev:1;)
 
-# Command Injection
 alert tcp any any -> any 80 (msg:"WEB ATTACK CMDi Semicolon Injection"; content:";whoami"; http_uri; nocase; sid:1000212; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK CMDi Pipe Injection"; content:"|id"; http_uri; nocase; sid:1000213; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK CMDi AND Injection"; content:"&&cat"; http_uri; nocase; sid:1000214; rev:1;)
@@ -328,188 +220,125 @@ alert tcp any any -> any 80 (msg:"WEB ATTACK CMDi Backtick Injection"; content:"
 alert tcp any any -> any 80 (msg:"WEB ATTACK CMDi wget"; content:"wget "; http_uri; nocase; sid:1000216; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK CMDi curl"; content:"curl "; http_uri; nocase; sid:1000217; rev:1;)
 
-# SSRF (Server Side Request Forgery)
 alert tcp any any -> any 80 (msg:"WEB ATTACK SSRF AWS Metadata"; content:"169.254.169.254"; http_uri; sid:1000218; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK SSRF Localhost"; content:"localhost"; http_uri; nocase; sid:1000219; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK SSRF 127.0.0.1"; content:"127.0.0.1"; http_uri; sid:1000220; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK SSRF Internal Range 192.168"; content:"192.168."; http_uri; sid:1000221; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK SSRF Internal Range 10.0"; content:"10.0."; http_uri; sid:1000222; rev:1;)
 
-# XXE (XML External Entity)
 alert tcp any any -> any 80 (msg:"WEB ATTACK XXE DOCTYPE Declaration"; content:"<!DOCTYPE"; http_client_body; nocase; sid:1000223; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK XXE ENTITY Declaration"; content:"<!ENTITY"; http_client_body; nocase; sid:1000224; rev:1;)
 alert tcp any any -> any 80 (msg:"WEB ATTACK XXE SYSTEM Keyword"; content:"SYSTEM"; http_client_body; nocase; content:"file://"; http_client_body; nocase; distance:0; sid:1000225; rev:1;)
 
 
-# ==========================================
-# 20 - PROTOCOL ABUSE
-# ==========================================
 
-# HTTP CONNECT tunneling
 alert tcp any any -> any 80 (msg:"PROTOCOL ABUSE HTTP CONNECT Tunnel"; content:"CONNECT "; depth:8; sid:1000230; rev:1;)
 alert tcp any any -> any 8080 (msg:"PROTOCOL ABUSE HTTP CONNECT Alt Port"; content:"CONNECT "; depth:8; sid:1000231; rev:1;)
 
-# SSL/TLS on non-standard ports
 alert tcp any any -> any 4444 (msg:"PROTOCOL ABUSE SSL on Non-Standard Port 4444"; content:"|16 03|"; sid:1000232; rev:1;)
 alert tcp any any -> any 8888 (msg:"PROTOCOL ABUSE SSL on Non-Standard Port 8888"; content:"|16 03|"; sid:1000233; rev:1;)
 alert tcp any any -> any 1234 (msg:"PROTOCOL ABUSE SSL on Non-Standard Port 1234"; content:"|16 03|"; sid:1000234; rev:1;)
 
-# IPv6 tunneling over IPv4
 alert ip any any -> any any (msg:"PROTOCOL ABUSE IPv6 in IPv4 Tunnel"; ip_proto:41; sid:1000235; rev:1;)
 
-# DNS over HTTP (DoH abuse for C2)
 alert tcp any any -> any 443 (msg:"PROTOCOL ABUSE DNS over HTTPS"; content:"dns-query"; http_uri; nocase; sid:1000236; rev:1;)
 
-# ICMP redirect abuse
 alert icmp any any -> any any (msg:"PROTOCOL ABUSE ICMP Redirect"; itype:5; sid:1000237; rev:1;)
 
-# Unusual protocol on common ports
 alert tcp any any -> any 80 (msg:"PROTOCOL ABUSE Non-HTTP on Port 80"; content:"|16 03|"; sid:1000238; rev:1;)
 
 
-# ==========================================
-# 21 - MALWARE SPECIFIC
-# ==========================================
 
-# Emotet C2 patterns
 alert tcp any any -> any 80 (msg:"MALWARE Emotet HTTP POST Beacon"; content:"POST"; http_method; content:"/"; http_uri; content:"Cookie:"; http_header; dsize:>200; sid:1000240; rev:1;)
 
-# Trickbot C2
 alert tcp any any -> any 443 (msg:"MALWARE Trickbot HTTPS C2"; content:"TrickBot"; nocase; sid:1000241; rev:1;)
 
-# WannaCry kill switch domain check
 alert udp any any -> any 53 (msg:"MALWARE WannaCry Kill Switch DNS Lookup"; content:"iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea"; nocase; sid:1000242; rev:1;)
 
-# Cobalt Strike malleable C2 indicators
 alert tcp any any -> any 80 (msg:"MALWARE Cobalt Strike jQuery Profile"; content:"jQuery"; http_uri; content:"__utm"; http_uri; distance:0; nocase; sid:1000243; rev:1;)
 alert tcp any any -> any 80 (msg:"MALWARE Cobalt Strike Checksum8"; content:"/ca"; http_uri; sid:1000244; rev:1;)
 
-# Metasploit meterpreter staging
 alert tcp any any -> any any (msg:"MALWARE Metasploit Payload Staging"; content:"|fc e8 8f 00 00 00|"; sid:1000245; rev:1;)
 
-# Known bad user agents
 alert tcp any any -> any 80 (msg:"MALWARE Known Bad UA MSIE Fake"; content:"MSIE 6.0"; http_header; nocase; sid:1000246; rev:1;)
 alert tcp any any -> any 80 (msg:"MALWARE Suspicious UA Mozilla Compatible Only"; content:"User-Agent: Mozilla/4.0 (compatible)"; http_header; sid:1000247; rev:1;)
 
-# Sliver implant
 alert tcp any any -> any 443 (msg:"MALWARE Sliver Implant mTLS"; content:"sliver"; nocase; sid:1000248; rev:1;)
 
-# AsyncRAT
 alert tcp any any -> any 6606 (msg:"MALWARE AsyncRAT Default Port"; sid:1000249; rev:1;)
 alert tcp any any -> any 7707 (msg:"MALWARE AsyncRAT Alt Port"; sid:1000250; rev:1;)
 
-# NjRAT
 alert tcp any any -> any 1177 (msg:"MALWARE NjRAT Default Port"; sid:1000251; rev:1;)
 
-# Redline Stealer
 alert tcp any any -> any 80 (msg:"MALWARE Redline Stealer HTTP Exfil"; content:"RedLine"; nocase; sid:1000252; rev:1;)
 
 
-# ==========================================
-# 22 - CLOUD / MODERN INFRASTRUCTURE
-# ==========================================
 
-# AWS Metadata Service abuse (SSRF to IMDS)
 alert tcp any any -> any 80 (msg:"CLOUD AWS Metadata IMDS Access"; content:"169.254.169.254"; sid:1000260; rev:1;)
 alert tcp any any -> any 80 (msg:"CLOUD AWS Metadata Token Request"; content:"x-aws-ec2-metadata-token"; http_header; nocase; sid:1000261; rev:1;)
 alert tcp any any -> any 80 (msg:"CLOUD AWS Credentials Endpoint"; content:"/latest/meta-data/iam/security-credentials"; http_uri; nocase; sid:1000262; rev:1;)
 
-# Azure IMDS abuse
 alert tcp any any -> any 80 (msg:"CLOUD Azure IMDS Access"; content:"metadata/instance"; http_uri; nocase; sid:1000263; rev:1;)
 alert tcp any any -> any 80 (msg:"CLOUD Azure IMDS Header"; content:"Metadata: true"; http_header; nocase; sid:1000264; rev:1;)
 
-# Kubernetes API probing
 alert tcp any any -> any 6443 (msg:"CLOUD Kubernetes API Server Probe"; sid:1000265; rev:1;)
 alert tcp any any -> any 8001 (msg:"CLOUD Kubernetes kubectl Proxy"; sid:1000266; rev:1;)
 alert tcp any any -> any 10250 (msg:"CLOUD Kubernetes Kubelet API"; sid:1000267; rev:1;)
 alert tcp any any -> any 2379 (msg:"CLOUD etcd Access Attempt"; sid:1000268; rev:1;)
 
-# Docker API abuse
 alert tcp any any -> any 2375 (msg:"CLOUD Docker API Unauthenticated"; sid:1000269; rev:1;)
 alert tcp any any -> any 2376 (msg:"CLOUD Docker API TLS"; sid:1000270; rev:1;)
 
-# GCP Metadata
 alert tcp any any -> any 80 (msg:"CLOUD GCP Metadata Service"; content:"metadata.google.internal"; http_header; nocase; sid:1000271; rev:1;)
 
 
-# ==========================================
-# 23 - EMAIL BASED ATTACKS
-# ==========================================
 
-# SMTP phishing patterns
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP Suspicious Attachment"; content:"Content-Disposition: attachment"; nocase; content:".exe"; nocase; distance:0; sid:1000280; rev:1;)
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP Macro Attachment"; content:".doc"; nocase; content:"attachment"; nocase; distance:0; sid:1000281; rev:1;)
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP ZIP Attachment"; content:".zip"; nocase; content:"attachment"; nocase; distance:0; sid:1000282; rev:1;)
 
-# Phishing keywords
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP Phishing Keyword Verify"; content:"verify your account"; nocase; sid:1000283; rev:1;)
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP Phishing Keyword Password"; content:"reset your password"; nocase; sid:1000284; rev:1;)
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP Phishing Keyword Urgent"; content:"urgent action required"; nocase; sid:1000285; rev:1;)
 
-# Spoofed sender
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP Open Relay Attempt"; content:"RCPT TO:"; nocase; content:"MAIL FROM:"; nocase; distance:0; sid:1000286; rev:1;)
 
-# SMTP brute force
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP Auth Brute Force"; content:"AUTH LOGIN"; nocase; threshold:type threshold, track by_src, count 5, seconds 60; sid:1000287; rev:1;)
 
-# Email harvesting
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP VRFY Command"; content:"VRFY "; nocase; sid:1000288; rev:1;)
 alert tcp any any -> any 25 (msg:"EMAIL ATTACK SMTP EXPN Command"; content:"EXPN "; nocase; sid:1000289; rev:1;)
 
 
-# ==========================================
-# 24 - VOIP ATTACKS
-# ==========================================
 
-# SIP scanning
 alert udp any any -> any 5060 (msg:"VOIP SIP Scanning"; content:"REGISTER sip:"; nocase; threshold:type threshold, track by_src, count 10, seconds 5; sid:1000290; rev:1;)
 alert tcp any any -> any 5060 (msg:"VOIP SIP TCP Scanning"; content:"REGISTER sip:"; nocase; threshold:type threshold, track by_src, count 10, seconds 5; sid:1000291; rev:1;)
 
-# SIP brute force
 alert udp any any -> any 5060 (msg:"VOIP SIP Brute Force Auth"; content:"Authorization:"; nocase; threshold:type threshold, track by_src, count 10, seconds 30; sid:1000292; rev:1;)
 
-# SIP invite flood (DoS)
 alert udp any any -> any 5060 (msg:"VOIP SIP INVITE Flood"; content:"INVITE sip:"; nocase; threshold:type threshold, track by_src, count 20, seconds 5; sid:1000293; rev:1;)
 
-# SIP options scan (enumeration)
 alert udp any any -> any 5060 (msg:"VOIP SIP OPTIONS Enumeration"; content:"OPTIONS sip:"; nocase; sid:1000294; rev:1;)
 
-# Toll fraud
 alert udp any any -> any 5060 (msg:"VOIP SIP International Call Attempt"; content:"INVITE sip:+"; nocase; sid:1000295; rev:1;)
 
-# RTP media stream anomaly
 alert udp any any -> any any (msg:"VOIP RTP Suspicious Large Payload"; dsize:>1400; sid:1000296; rev:1;)
 
 
-# ==========================================
-# 25 - INDUSTRIAL / OT (ICS/SCADA)
-# ==========================================
 
-# Modbus
 alert tcp any any -> any 502 (msg:"ICS Modbus TCP Request"; sid:1000300; rev:1;)
 alert tcp any any -> any 502 (msg:"ICS Modbus Write Command"; content:"|00 00 00 00 00 06|"; content:"|10|"; distance:1; sid:1000301; rev:1;)
 alert tcp any any -> any 502 (msg:"ICS Modbus Force Listen Mode"; content:"|00 00 00 00 00 02 ff 08|"; sid:1000302; rev:1;)
 
-# DNP3
 alert tcp any any -> any 20000 (msg:"ICS DNP3 Request Detected"; content:"|05 64|"; sid:1000303; rev:1;)
 alert udp any any -> any 20000 (msg:"ICS DNP3 UDP Request"; content:"|05 64|"; sid:1000304; rev:1;)
 alert tcp any any -> any 20000 (msg:"ICS DNP3 Unsolicited Response"; content:"|05 64|"; content:"|F0|"; distance:0; sid:1000305; rev:1;)
 
-# EtherNet/IP (Rockwell/Allen Bradley)
 alert tcp any any -> any 44818 (msg:"ICS EtherNet/IP CIP Request"; sid:1000306; rev:1;)
 alert udp any any -> any 44818 (msg:"ICS EtherNet/IP UDP Broadcast"; sid:1000307; rev:1;)
 
-# Siemens S7
 alert tcp any any -> any 102 (msg:"ICS Siemens S7 Communication"; content:"|03 00|"; sid:1000308; rev:1;)
 
-# BACnet (Building Automation)
 alert udp any any -> any 47808 (msg:"ICS BACnet Discovery"; content:"|81 0b|"; sid:1000309; rev:1;)
 
-# ICS scanning behavior
 alert tcp any any -> any [102,502,20000,44818] (msg:"ICS Protocol Port Scan"; flags:S; threshold:type threshold, track by_src, count 5, seconds 10; sid:1000310; rev:1;)
 
-# ==========================================
-# END OF RULES
-# Total rules: ~200
-# SID Range: 1000011 - 1000310
-# ==========================================
