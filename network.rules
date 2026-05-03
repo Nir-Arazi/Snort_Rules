@@ -26,7 +26,7 @@ alert udp any any -> any 161 ( msg:"RECON SNMP Default Community String private"
 alert tcp any any -> any 445 ( msg:"RECON SMB Version Detection"; flow:to_server,established; content:"|FF|SMB", depth 5; sid:1000171; rev:4; )
 alert udp any any -> any 137 ( msg:"RECON NetBIOS Name Query"; content:"|00 00 00 01 00 00 00 00 00 00|", depth 10; detection_filter:track by_src, count 5, seconds 10; sid:1000172; rev:4; )
 alert tcp any any -> any 135 ( msg:"RECON WMI DCOM Enumeration"; flow:to_server,established; content:"IWbemLevel1Login", nocase; sid:1000173; rev:4; )
-alert tcp any any -> any 389 ( msg:"RECON LDAP Blind Filter Enumeration"; flow:to_server,established; content:"(|(objectClass=", nocase; sid:1000175; rev:4; )
+alert tcp any any -> any 389 ( msg:"RECON LDAP Blind Filter Enumeration"; flow:to_server,established; content:"(|7C|(objectClass=", nocase; sid:1000175; rev:4; )
 alert tcp any any -> any 636 ( msg:"RECON LDAPS Enumeration"; flow:to_server,established; content:"objectClass", nocase; sid:1000176; rev:4; )
 alert tcp any any -> any 3268 ( msg:"RECON LDAP Global Catalog Enumeration"; flow:to_server,established; content:"samAccountName", nocase; sid:1000177; rev:4; )
 alert tcp any any -> any 445 ( msg:"EXPLOIT MS17-010 EternalBlue Attempt"; flow:to_server,established; content:"|00 00 00 00 00 57 ff|", depth 7; sid:1000018; rev:4; )
