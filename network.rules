@@ -1,46 +1,20 @@
-# =============================================================================
-# LOCAL.RULES - Snort 3 Compatible - Full Upgraded Ruleset
-# Changes from original:
-#   - detection_filter added on all brute force / flood / scan rules
-#   - nocase added to all string content matches
-#   - depth/within anchoring on all multi-content rules
-#   - Duplicate SIDs resolved
-#   - New detections added: persistence, discovery, new malware families,
-#     more web attacks, cloud escapes, ICS coverage expanded
-# =============================================================================
-
-# ---------------------------------------------------------------------------
-# DNS TUNNELING
-# ---------------------------------------------------------------------------
 alert udp any any -> any 53 ( msg:"DNS TUNNEL Long Query"; dsize:>100; detection_filter:track by_src, count 5, seconds 10; sid:1000011; rev:4; )
 alert udp any any -> any 53 ( msg:"DNS TUNNEL Suspicious TXT Record"; content:"|00 10|"; depth:2; sid:1000013; rev:4; )
 alert tcp any any -> any 53 ( msg:"DNS TUNNEL TCP Query"; flow:to_server,established; sid:1000014; rev:4; )
 alert udp any any -> any 53 ( msg:"DNS TUNNEL High Query Rate"; dsize:>60; detection_filter:track by_src, count 50, seconds 10; sid:1000015; rev:4; )
 alert udp any any -> any 53 ( msg:"DNS TUNNEL Base64 Encoded Subdomain"; content:"|3d|"; nocase; sid:1000017; rev:4; )
-
-# ---------------------------------------------------------------------------
-# ICMP TUNNELING / FILE EXFIL VIA ICMP
-# ---------------------------------------------------------------------------
 alert icmp any any -> any any ( msg:"ICMP TUNNEL Large Payload"; dsize:>100; itype:8; detection_filter:track by_src, count 5, seconds 10; sid:1000016; rev:4; )
 alert icmp any any -> any any ( msg:"FILE EXFIL ICMP ZIP Archive"; itype:8; content:"|50 4B 03 04|"; depth:4; sid:1000032; rev:4; )
 alert icmp any any -> any any ( msg:"FILE EXFIL ICMP PDF Magic Bytes"; itype:8; content:"|25 50 44 46|"; depth:4; sid:1000033; rev:4; )
 alert icmp any any -> any any ( msg:"FILE EXFIL ICMP PNG Magic Bytes"; itype:8; content:"|89 50 4E 47|"; depth:4; sid:1000034; rev:4; )
 alert icmp any any -> any any ( msg:"PROTOCOL ABUSE ICMP Redirect"; itype:5; sid:1000237; rev:4; )
 alert icmp any any -> any any ( msg:"ICMP FLOOD Potential DoS"; itype:8; detection_filter:track by_src, count 100, seconds 5; sid:1000238; rev:4; )
-
-# ---------------------------------------------------------------------------
-# RECON - PORT/NETWORK SCANNING
-# ---------------------------------------------------------------------------
 alert tcp any any -> any any ( msg:"RECON NMAP NULL Scan"; flags:0; detection_filter:track by_src, count 5, seconds 5; sid:1000161; rev:4; )
 alert tcp any any -> any any ( msg:"RECON NMAP FIN Scan"; flags:F; detection_filter:track by_src, count 5, seconds 5; sid:1000162; rev:4; )
 alert tcp any any -> any any ( msg:"RECON NMAP XMAS Scan"; flags:FPU; detection_filter:track by_src, count 5, seconds 5; sid:1000163; rev:4; )
 alert tcp any any -> any any ( msg:"RECON NMAP OS Fingerprint SF"; flags:SF; detection_filter:track by_src, count 5, seconds 5; sid:1000160; rev:4; )
 alert tcp any any -> any any ( msg:"RECON SYN Port Sweep"; flags:S; detection_filter:track by_src, count 30, seconds 5; sid:1000159; rev:4; )
 alert udp any any -> any any ( msg:"RECON UDP Port Scan"; detection_filter:track by_src, count 30, seconds 5; sid:1000157; rev:4; )
-
-# ---------------------------------------------------------------------------
-# RECON - SMB / LDAP / DNS / SNMP / WMI
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 445 ( msg:"RECON SMB SAMR Enumeration"; flow:to_server,established; content:"SAMR"; nocase; sid:1000164; rev:4; )
 alert tcp any any -> any 445 ( msg:"RECON SMB Share Enumeration srvsvc"; flow:to_server,established; content:"srvsvc"; nocase; sid:1000165; rev:4; )
 alert tcp any any -> any 389 ( msg:"RECON LDAP objectClass Enumeration"; flow:to_server,established; content:"objectClass"; nocase; sid:1000166; rev:4; )
@@ -55,10 +29,6 @@ alert tcp any any -> any 135 ( msg:"RECON WMI DCOM Enumeration"; flow:to_server,
 alert tcp any any -> any 389 ( msg:"RECON LDAP Blind Filter Enumeration"; flow:to_server,established; content:"(|(objectClass="; nocase; sid:1000175; rev:4; )
 alert tcp any any -> any 636 ( msg:"RECON LDAPS Enumeration"; flow:to_server,established; content:"objectClass"; nocase; sid:1000176; rev:4; )
 alert tcp any any -> any 3268 ( msg:"RECON LDAP Global Catalog Enumeration"; flow:to_server,established; content:"samAccountName"; nocase; sid:1000177; rev:4; )
-
-# ---------------------------------------------------------------------------
-# EXPLOIT
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 445 ( msg:"EXPLOIT MS17-010 EternalBlue Attempt"; flow:to_server,established; content:"|00 00 00 00 00 57 ff|"; depth:7; sid:1000018; rev:4; )
 alert tcp any any -> any 8080 ( msg:"EXPLOIT Apache Struts OGNL Injection"; flow:to_server,established; content:"%{"; content:"Runtime"; within:50; nocase; sid:1000019; rev:4; )
 alert tcp any any -> any 80 ( msg:"EXPLOIT PHP Remote Code Execution eval"; flow:to_server,established; content:"eval("; nocase; sid:1000020; rev:4; )
@@ -66,10 +36,6 @@ alert tcp any any -> any 80 ( msg:"EXPLOIT Java Deserialization Magic Bytes HTTP
 alert tcp any any -> any 443 ( msg:"EXPLOIT Java Deserialization Magic Bytes HTTPS"; flow:established; content:"|AC ED 00 05|"; depth:4; sid:1000035; rev:4; )
 alert tcp any any -> any 80 ( msg:"EXPLOIT Heartbleed TLS Type 24 Request"; flow:to_server,established; content:"|18 03|"; depth:2; sid:1000036; rev:4; )
 alert tcp any any -> any 80 ( msg:"EXPLOIT ProxyLogon Exchange SSRF"; flow:to_server,established; content:"/ecp/"; content:"X-BEResource"; within:200; nocase; sid:1000039; rev:4; )
-
-# ---------------------------------------------------------------------------
-# FILE EXFILTRATION
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 80 ( msg:"FILE EXFIL Large HTTP POST Outbound"; flow:to_server,established; content:"POST"; depth:4; dsize:>5000; sid:1000022; rev:4; )
 alert tcp any any -> any 443 ( msg:"FILE EXFIL Large HTTPS Outbound"; flow:to_server,established; dsize:>10000; detection_filter:track by_src, count 3, seconds 30; sid:1000023; rev:4; )
 alert tcp any any -> any 21 ( msg:"FILE EXFIL FTP STOR Command"; flow:to_server,established; content:"STOR"; nocase; depth:4; sid:1000024; rev:4; )
@@ -82,10 +48,6 @@ alert tcp any any -> any 443 ( msg:"FILE EXFIL Mega.nz Upload"; flow:to_server,e
 alert tcp any any -> any 443 ( msg:"FILE EXFIL Transfer.sh Upload"; flow:to_server,established; content:"transfer.sh"; nocase; sid:1000031; rev:4; )
 alert tcp any any -> any 443 ( msg:"FILE EXFIL Dropbox API Upload"; flow:to_server,established; content:"api.dropboxapi.com"; nocase; sid:1000037; rev:4; )
 alert tcp any any -> any 443 ( msg:"FILE EXFIL Anonfiles Upload"; flow:to_server,established; content:"anonfiles.com"; nocase; sid:1000038; rev:4; )
-
-# ---------------------------------------------------------------------------
-# SHELL / REVERSE SHELL
-# ---------------------------------------------------------------------------
 alert tcp any any -> any any ( msg:"SHELL Netcat Reverse Shell nc -e"; flow:established; content:"nc -e"; nocase; sid:1000040; rev:4; )
 alert tcp any any -> any any ( msg:"SHELL Netcat Listener Setup nc -lvp"; flow:established; content:"nc -lvp"; nocase; sid:1000041; rev:4; )
 alert tcp any any -> any any ( msg:"SHELL Bash Reverse Shell /dev/tcp"; flow:established; content:"bash -i >& /dev/tcp/"; nocase; sid:1000042; rev:4; )
@@ -106,10 +68,6 @@ alert tcp any any -> any any ( msg:"SHELL Python3 PTY Spawn Upgrade"; flow:estab
 alert tcp any any -> any any ( msg:"SHELL Perl Reverse Shell perl -e"; flow:established; content:"perl -e"; nocase; sid:1000057; rev:4; )
 alert tcp any any -> any any ( msg:"SHELL Ruby Reverse Shell ruby -rsocket"; flow:established; content:"ruby -rsocket"; nocase; sid:1000058; rev:4; )
 alert tcp any any -> any any ( msg:"SHELL PowerShell WebClient DownloadFile"; flow:established; content:"Net.WebClient"; content:"DownloadFile"; within:50; nocase; sid:1000059; rev:4; )
-
-# ---------------------------------------------------------------------------
-# LOG4J / LOG4SHELL
-# ---------------------------------------------------------------------------
 alert tcp any any -> any any ( msg:"LOG4J JNDI Lookup Attempt"; flow:established; content:"${jndi:"; nocase; sid:1000060; rev:4; )
 alert tcp any any -> any any ( msg:"LOG4J JNDI LDAP Exploit"; flow:established; content:"${jndi:ldap://"; nocase; sid:1000061; rev:4; )
 alert tcp any any -> any any ( msg:"LOG4J JNDI RMI Exploit"; flow:established; content:"${jndi:rmi://"; nocase; sid:1000062; rev:4; )
@@ -121,10 +79,6 @@ alert tcp any any -> any any ( msg:"LOG4J URL Encoded Bypass %24%7Bjndi"; flow:e
 alert tcp any any -> any any ( msg:"LOG4J env Variable Bypass"; flow:established; content:"${env:"; content:"jndi"; within:30; nocase; sid:1000068; rev:4; )
 alert tcp any any -> any 389 ( msg:"LOG4J Outbound LDAP Callback"; flow:to_server,established; sid:1000069; rev:4; )
 alert tcp any any -> any 1389 ( msg:"LOG4J LDAP Alt Port Callback"; flow:to_server,established; sid:1000070; rev:4; )
-
-# ---------------------------------------------------------------------------
-# CREDENTIAL THEFT - MIMIKATZ / LSASS / DCSync / KERBEROASTING
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 389 ( msg:"MIMIKATZ DCSync DsGetNCChanges"; flow:to_server,established; content:"DsGetNCChanges"; nocase; sid:1000080; rev:4; )
 alert tcp any any -> any 445 ( msg:"MIMIKATZ Pass-The-Hash NTLMSSP"; flow:to_server,established; content:"NTLMSSP"; depth:7; sid:1000081; rev:4; )
 alert udp any any -> any 88 ( msg:"MIMIKATZ Oversized Kerberos Ticket"; dsize:>1000; sid:1000082; rev:4; )
@@ -135,10 +89,6 @@ alert tcp any any -> any 445 ( msg:"CREDENTIAL THEFT SAM Hive Access via SMB"; f
 alert tcp any any -> any 445 ( msg:"CREDENTIAL THEFT SYSTEM Hive Access via SMB"; flow:to_server,established; content:"\\SYSTEM"; nocase; sid:1000087; rev:4; )
 alert udp any any -> any 88 ( msg:"KERBEROASTING TGS Ticket Flood"; dsize:>800; detection_filter:track by_src, count 10, seconds 15; sid:1000088; rev:4; )
 alert udp any any -> any 88 ( msg:"KERBEROASTING AS-REP Roasting Request"; dsize:>500; detection_filter:track by_src, count 5, seconds 10; sid:1000089; rev:4; )
-
-# ---------------------------------------------------------------------------
-# WEB ATTACKS - XSS
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 80 ( msg:"XSS Script Tag in URI"; flow:to_server,established; content:"<script>"; nocase; sid:1000090; rev:4; )
 alert tcp any any -> any 80 ( msg:"XSS IMG onerror Tag"; flow:to_server,established; content:"<img"; content:"onerror"; within:30; nocase; sid:1000091; rev:4; )
 alert tcp any any -> any 80 ( msg:"XSS SVG onload Tag"; flow:to_server,established; content:"<svg"; content:"onload"; within:20; nocase; sid:1000092; rev:4; )
@@ -148,10 +98,6 @@ alert tcp any any -> any 80 ( msg:"XSS javascript URI Scheme"; flow:to_server,es
 alert tcp any any -> any 80 ( msg:"XSS Base64 Data URI"; flow:to_server,established; content:"data:text/html;base64"; nocase; sid:1000096; rev:4; )
 alert tcp any any -> any 80 ( msg:"XSS DOM innerHTML Injection"; flow:to_server,established; content:"innerHTML"; nocase; sid:1000097; rev:4; )
 alert tcp any any -> any 80 ( msg:"XSS document.cookie Access"; flow:to_server,established; content:"document.cookie"; nocase; sid:1000098; rev:4; )
-
-# ---------------------------------------------------------------------------
-# WEB ATTACKS - SQL INJECTION
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 80 ( msg:"SQLI Union Select"; flow:to_server,established; content:"union"; content:"select"; within:20; nocase; sid:1000100; rev:4; )
 alert tcp any any -> any 80 ( msg:"SQLI Boolean OR 1=1"; flow:to_server,established; content:"or 1=1"; nocase; sid:1000101; rev:4; )
 alert tcp any any -> any 80 ( msg:"SQLI Boolean AND 1=1"; flow:to_server,established; content:"and 1=1"; nocase; sid:1000102; rev:4; )
@@ -167,10 +113,6 @@ alert tcp any any -> any 80 ( msg:"SQLI CHAR Function Obfuscation"; flow:to_serv
 alert tcp any any -> any 80 ( msg:"SQLI extractvalue Error Based"; flow:to_server,established; content:"extractvalue("; nocase; sid:1000112; rev:4; )
 alert tcp any any -> any 80 ( msg:"SQLI updatexml Error Based"; flow:to_server,established; content:"updatexml("; nocase; sid:1000113; rev:4; )
 alert tcp any any -> any 80 ( msg:"SQLI Stacked Query Semicolon"; flow:to_server,established; content:"';"; content:"select"; within:30; nocase; sid:1000114; rev:4; )
-
-# ---------------------------------------------------------------------------
-# RANSOMWARE
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 445 ( msg:"RANSOMWARE SMB Lateral Spread SYN Flood"; flags:S; detection_filter:track by_src, count 20, seconds 5; sid:1000120; rev:4; )
 alert tcp any any -> any 9001 ( msg:"RANSOMWARE TOR C2 Port 9001"; flow:to_server,established; sid:1000121; rev:4; )
 alert tcp any any -> any 9050 ( msg:"RANSOMWARE TOR SOCKS Proxy 9050"; flow:to_server,established; sid:1000122; rev:4; )
@@ -181,10 +123,6 @@ alert tcp any any -> any 80 ( msg:"RANSOMWARE Bitcoin Wallet Payment Request"; f
 alert tcp any any -> any 80 ( msg:"RANSOMWARE Monero Payment Demand"; flow:established; content:"monero"; content:"wallet"; within:50; nocase; sid:1000125; rev:4; )
 alert tcp any any -> any any ( msg:"RANSOMWARE VSS Shadow Copy Deletion vssadmin"; flow:established; content:"vssadmin"; content:"delete shadows"; within:30; nocase; sid:1000129; rev:4; )
 alert tcp any any -> any any ( msg:"RANSOMWARE WMIC Shadow Copy Delete"; flow:established; content:"wmic"; content:"shadowcopy delete"; within:30; nocase; sid:1000128; rev:4; )
-
-# ---------------------------------------------------------------------------
-# C2 FRAMEWORKS
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 50050 ( msg:"C2 Cobalt Strike Default Teamserver Port"; flow:to_server,established; sid:1000130; rev:4; )
 alert tcp any any -> any 8080 ( msg:"C2 Cobalt Strike Alt HTTP Beacon"; flow:to_server,established; content:"Authorization: Bearer"; nocase; sid:1000131; rev:4; )
 alert tcp any any -> any 80 ( msg:"C2 Cobalt Strike Beacon GET Checkin"; flow:to_server,established; content:"GET"; depth:3; content:"Cookie:"; within:200; nocase; sid:1000133; rev:4; )
@@ -201,10 +139,6 @@ alert tcp any any -> any 2222 ( msg:"C2 Brute Ratel Default Port"; flow:to_serve
 alert tcp any any -> any 8888 ( msg:"C2 Villain Framework Default Port"; flow:to_server,established; sid:1000147; rev:4; )
 alert tcp any any -> any 6969 ( msg:"C2 Suspicious Non-Standard Port 6969"; flow:to_server,established; sid:1000148; rev:4; )
 alert tcp any any -> any 1234 ( msg:"C2 Suspicious Non-Standard Port 1234"; flow:to_server,established; sid:1000149; rev:4; )
-
-# ---------------------------------------------------------------------------
-# BRUTE FORCE
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 22 ( msg:"BRUTE FORCE SSH Login Attempt"; flow:to_server,established; content:"SSH"; nocase; detection_filter:track by_src, count 5, seconds 30; sid:1000150; rev:4; )
 alert tcp any any -> any 3389 ( msg:"BRUTE FORCE RDP Login Attempt"; flow:to_server,established; detection_filter:track by_src, count 5, seconds 30; sid:1000151; rev:4; )
 alert tcp any any -> any 1433 ( msg:"BRUTE FORCE MSSQL Login Attempt"; flow:to_server,established; detection_filter:track by_src, count 5, seconds 30; sid:1000152; rev:4; )
@@ -218,10 +152,6 @@ alert tcp any any -> any 3306 ( msg:"BRUTE FORCE MySQL Login Attempt"; flow:to_s
 alert tcp any any -> any 5432 ( msg:"BRUTE FORCE PostgreSQL Login Attempt"; flow:to_server,established; detection_filter:track by_src, count 5, seconds 30; sid:1000134; rev:4; )
 alert tcp any any -> any 6379 ( msg:"BRUTE FORCE Redis Unauthenticated Access"; flow:to_server,established; content:"PING"; nocase; detection_filter:track by_src, count 5, seconds 10; sid:1000116; rev:4; )
 alert tcp any any -> any 27017 ( msg:"BRUTE FORCE MongoDB Unauthenticated Access"; flow:to_server,established; detection_filter:track by_src, count 5, seconds 30; sid:1000115; rev:4; )
-
-# ---------------------------------------------------------------------------
-# LATERAL MOVEMENT
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 445 ( msg:"LATERAL MOVEMENT PsExec Service PSEXESVC"; flow:to_server,established; content:"PSEXESVC"; nocase; sid:1000180; rev:4; )
 alert tcp any any -> any 445 ( msg:"LATERAL MOVEMENT PsExec Binary Magic Bytes"; flow:to_server,established; content:"|50 53 45 58 45 53 56 43|"; depth:8; sid:1000181; rev:4; )
 alert tcp any any -> any 135 ( msg:"LATERAL MOVEMENT WMI IWbemServices"; flow:to_server,established; content:"IWbemServices"; nocase; sid:1000182; rev:4; )
@@ -238,10 +168,6 @@ alert tcp any any -> any 445 ( msg:"LATERAL MOVEMENT Task Scheduler tsch"; flow:
 alert tcp any any -> any 445 ( msg:"LATERAL MOVEMENT WMI via SMB winmgmt"; flow:to_server,established; content:"winmgmt"; nocase; sid:1000194; rev:4; )
 alert tcp any any -> any 135 ( msg:"LATERAL MOVEMENT DCOM MMC20 Application"; flow:to_server,established; content:"MMC20"; nocase; sid:1000195; rev:4; )
 alert tcp any any -> any 5986 ( msg:"LATERAL MOVEMENT WinRM HTTPS Execution"; flow:to_server,established; sid:1000196; rev:4; )
-
-# ---------------------------------------------------------------------------
-# WEB ATTACKS - LFI / Path Traversal / RFI / CMDi / SSRF / XXE / SSTI
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 80 ( msg:"WEB ATTACK LFI /etc/passwd"; flow:to_server,established; content:"/etc/passwd"; nocase; sid:1000200; rev:4; )
 alert tcp any any -> any 80 ( msg:"WEB ATTACK LFI /etc/shadow"; flow:to_server,established; content:"/etc/shadow"; nocase; sid:1000201; rev:4; )
 alert tcp any any -> any 80 ( msg:"WEB ATTACK LFI Windows win.ini"; flow:to_server,established; content:"win.ini"; nocase; sid:1000202; rev:4; )
@@ -274,19 +200,11 @@ alert tcp any any -> any 80 ( msg:"WEB ATTACK Shellshock Header Injection"; flow
 alert tcp any any -> any 80 ( msg:"WEB ATTACK SSTI Jinja2 Template Injection"; flow:to_server,established; content:"{{"; content:"}}"; within:50; sid:1000229; rev:4; )
 alert tcp any any -> any 80 ( msg:"WEB ATTACK SSTI Twig Template Injection"; flow:to_server,established; content:"{%"; content:"%}"; within:50; sid:1000230; rev:4; )
 alert tcp any any -> any 80 ( msg:"WEB ATTACK Open Redirect Location Header"; flow:to_server,established; content:"Location:"; content:"http://"; within:50; nocase; sid:1000231; rev:4; )
-
-# ---------------------------------------------------------------------------
-# PROTOCOL ABUSE
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 80 ( msg:"PROTOCOL ABUSE HTTP CONNECT Tunnel"; flow:to_server,established; content:"CONNECT "; depth:8; nocase; sid:1000232; rev:4; )
 alert tcp any any -> any 4444 ( msg:"PROTOCOL ABUSE TLS on Port 4444"; flow:to_server,established; content:"|16 03|"; depth:2; sid:1000233; rev:4; )
 alert tcp any any -> any 8888 ( msg:"PROTOCOL ABUSE TLS on Port 8888"; flow:to_server,established; content:"|16 03|"; depth:2; sid:1000234; rev:4; )
 alert ip any any -> any any ( msg:"PROTOCOL ABUSE IPv6 in IPv4 Tunnel"; ip_proto:41; sid:1000235; rev:4; )
 alert tcp any any -> any 80 ( msg:"PROTOCOL ABUSE HTTP Carrying TLS Payload"; flow:to_server,established; content:"POST"; depth:4; content:"|16 03|"; within:200; sid:1000236; rev:4; )
-
-# ---------------------------------------------------------------------------
-# MALWARE FAMILIES
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 80 ( msg:"MALWARE Emotet HTTP POST Beacon"; flow:to_server,established; content:"POST"; depth:4; content:"Cookie:"; within:200; dsize:>200; nocase; sid:1000240; rev:4; )
 alert udp any any -> any 53 ( msg:"MALWARE WannaCry Kill Switch DNS Lookup"; content:"iuqerfsodp9ifjaposdfjhgosurijfaewrwergwea"; nocase; sid:1000242; rev:4; )
 alert tcp any any -> any any ( msg:"MALWARE Metasploit Shellcode Staging fc e8"; flow:established; content:"|fc e8 8f 00 00 00|"; depth:6; sid:1000245; rev:4; )
@@ -302,10 +220,6 @@ alert tcp any any -> any 80 ( msg:"MALWARE Raccoon Stealer Beacon machineId"; fl
 alert tcp any any -> any 80 ( msg:"MALWARE IcedID HTTP Beacon utmz Pattern"; flow:to_server,established; content:"gzip"; content:"__utmz"; within:100; nocase; sid:1000257; rev:4; )
 alert tcp any any -> any 447 ( msg:"MALWARE Cobalt Strike DNS Beacon Alt Port"; flow:to_server,established; sid:1000258; rev:4; )
 alert tcp any any -> any 8081 ( msg:"MALWARE DarkComet RAT Alt Port"; flow:to_server,established; sid:1000259; rev:4; )
-
-# ---------------------------------------------------------------------------
-# CLOUD / CONTAINER ATTACKS
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 80 ( msg:"CLOUD AWS IMDS 169.254 Metadata Access"; flow:to_server,established; content:"169.254.169.254"; sid:1000260; rev:4; )
 alert tcp any any -> any 80 ( msg:"CLOUD AWS IAM Credentials Endpoint"; flow:to_server,established; content:"/latest/meta-data/iam/security-credentials"; nocase; sid:1000262; rev:4; )
 alert tcp any any -> any 80 ( msg:"CLOUD AWS Token via Metadata"; flow:to_server,established; content:"/latest/meta-data/iam"; content:"token"; within:50; nocase; sid:1000263; rev:4; )
@@ -317,10 +231,6 @@ alert tcp any any -> any 2379 ( msg:"CLOUD etcd Unauthenticated Access"; flow:to
 alert tcp any any -> any 2375 ( msg:"CLOUD Docker API Unauthenticated HTTP"; flow:to_server,established; sid:1000269; rev:4; )
 alert tcp any any -> any 2375 ( msg:"CLOUD Docker Exec Container Escape"; flow:to_server,established; content:"exec"; content:"AttachStdin"; within:50; nocase; sid:1000270; rev:4; )
 alert tcp any any -> any 4243 ( msg:"CLOUD Docker API Alt Port 4243"; flow:to_server,established; sid:1000271; rev:4; )
-
-# ---------------------------------------------------------------------------
-# EMAIL ATTACKS
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 25 ( msg:"EMAIL ATTACK SMTP EXE Attachment"; flow:to_server,established; content:"Content-Disposition: attachment"; content:".exe"; within:100; nocase; sid:1000280; rev:4; )
 alert tcp any any -> any 25 ( msg:"EMAIL ATTACK SMTP DLL Attachment"; flow:to_server,established; content:"Content-Disposition: attachment"; content:".dll"; within:100; nocase; sid:1000281; rev:4; )
 alert tcp any any -> any 25 ( msg:"EMAIL ATTACK SMTP ISO Attachment"; flow:to_server,established; content:"Content-Disposition: attachment"; content:".iso"; within:100; nocase; sid:1000282; rev:4; )
@@ -332,19 +242,11 @@ alert tcp any any -> any 25 ( msg:"EMAIL ATTACK SMTP Macro Enabled XLSM"; flow:t
 alert tcp any any -> any 25 ( msg:"EMAIL ATTACK SMTP VRFY User Enumeration"; flow:to_server,established; content:"VRFY "; nocase; sid:1000288; rev:4; )
 alert tcp any any -> any 25 ( msg:"EMAIL ATTACK SMTP EXPN List Enumeration"; flow:to_server,established; content:"EXPN "; nocase; sid:1000289; rev:4; )
 alert tcp any any -> any 25 ( msg:"EMAIL ATTACK SMTP Open Relay Abuse"; flow:to_server,established; content:"RCPT TO:"; detection_filter:track by_src, count 20, seconds 60; nocase; sid:1000290; rev:4; )
-
-# ---------------------------------------------------------------------------
-# VOIP ATTACKS
-# ---------------------------------------------------------------------------
 alert udp any any -> any 5060 ( msg:"VOIP SIP REGISTER Scanning"; content:"REGISTER sip:"; nocase; detection_filter:track by_src, count 10, seconds 10; sid:1000291; rev:4; )
 alert udp any any -> any 5060 ( msg:"VOIP SIP INVITE Flood"; content:"INVITE sip:"; nocase; detection_filter:track by_src, count 20, seconds 5; sid:1000293; rev:4; )
 alert udp any any -> any 5060 ( msg:"VOIP SIP OPTIONS Enumeration"; content:"OPTIONS sip:"; nocase; detection_filter:track by_src, count 10, seconds 10; sid:1000294; rev:4; )
 alert udp any any -> any 5060 ( msg:"VOIP SIP SUBSCRIBE Abuse"; content:"SUBSCRIBE sip:"; nocase; detection_filter:track by_src, count 10, seconds 10; sid:1000295; rev:4; )
 alert udp any any -> any 5060 ( msg:"VOIP SIP Toll Fraud International Prefix"; content:"INVITE sip:"; content:"011"; within:50; nocase; sid:1000296; rev:4; )
-
-# ---------------------------------------------------------------------------
-# ICS / OT / SCADA
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 502 ( msg:"ICS Modbus TCP Request"; flow:to_server,established; sid:1000300; rev:4; )
 alert tcp any any -> any 502 ( msg:"ICS Modbus Write Multiple Registers"; flow:to_server,established; content:"|00 00 00 00 00 06|"; content:"|10|"; within:10; depth:7; sid:1000301; rev:4; )
 alert tcp any any -> any 502 ( msg:"ICS Modbus Force Listen Mode"; flow:to_server,established; content:"|00 00 00 00 00 02 ff 08|"; depth:8; sid:1000302; rev:4; )
@@ -358,10 +260,6 @@ alert udp any any -> any 47808 ( msg:"ICS BACnet Discovery Broadcast"; content:"
 alert tcp any any -> any 4840 ( msg:"ICS OPC-UA Connection Attempt"; flow:to_server,established; sid:1000311; rev:4; )
 alert tcp any any -> any 1962 ( msg:"ICS PCWorx PLC Access"; flow:to_server,established; sid:1000312; rev:4; )
 alert tcp any any -> any 9600 ( msg:"ICS OMRON FINS PLC Access"; flow:to_server,established; sid:1000313; rev:4; )
-
-# ---------------------------------------------------------------------------
-# PERSISTENCE / DEFENSE EVASION (NEW CATEGORY)
-# ---------------------------------------------------------------------------
 alert tcp any any -> any any ( msg:"PERSISTENCE Registry Run Key via Network"; flow:established; content:"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"; nocase; sid:1000400; rev:4; )
 alert tcp any any -> any any ( msg:"DEFENSE EVASION certutil URLCache Download"; flow:established; content:"certutil"; content:"-urlcache"; within:30; nocase; sid:1000401; rev:4; )
 alert tcp any any -> any any ( msg:"DEFENSE EVASION certutil Decode"; flow:established; content:"certutil"; content:"-decode"; within:20; nocase; sid:1000402; rev:4; )
@@ -372,10 +270,6 @@ alert tcp any any -> any any ( msg:"DEFENSE EVASION rundll32 Remote DLL"; flow:e
 alert tcp any any -> any any ( msg:"DEFENSE EVASION wscript Remote Payload"; flow:established; content:"wscript"; content:"http"; within:30; nocase; sid:1000407; rev:4; )
 alert tcp any any -> any any ( msg:"DEFENSE EVASION cscript Remote Payload"; flow:established; content:"cscript"; content:"http"; within:30; nocase; sid:1000408; rev:4; )
 alert tcp any any -> any any ( msg:"DEFENSE EVASION InstallUtil AppLaunch"; flow:established; content:"InstallUtil"; content:"/logfile="; within:30; nocase; sid:1000409; rev:4; )
-
-# ---------------------------------------------------------------------------
-# DISCOVERY / AD ENUMERATION (NEW CATEGORY)
-# ---------------------------------------------------------------------------
 alert tcp any any -> any 389 ( msg:"DISCOVERY BloodHound LDAP Computer Query"; flow:to_server,established; content:"(objectCategory="; content:"computer"; within:50; nocase; sid:1000500; rev:4; )
 alert tcp any any -> any 389 ( msg:"DISCOVERY BloodHound Admin Count Query"; flow:to_server,established; content:"adminCount=1"; nocase; sid:1000501; rev:4; )
 alert udp any any -> any 88 ( msg:"DISCOVERY Kerberos User Enumeration AS-REQ Flood"; dsize:>100; detection_filter:track by_src, count 10, seconds 10; sid:1000502; rev:4; )
